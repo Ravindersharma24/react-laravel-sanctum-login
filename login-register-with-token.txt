@@ -1,0 +1,54 @@
+1- composer require laravel/sanctum (install laravel sanctum package)
+2- php artisan vendor:publish --provider="Laravel\Sanctum\SanctumServiceProvider" (publish the vendors)
+3- run (php artisan migrate)
+4-  \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class, (uncomment this line in app/http/kernel.php in api section)
+5- use HasApiTokens (in User model)
+6- now write register api code in controller file and generate token as well.
+7- in config/cors.php  set  ('supports_credentials' => true,)
+8- Now in front end react  js
+    - In App.js -- set - (axios.defaults.withCredentials = true;)  // to handle cors policy error
+    Also these too :-
+        axios.defaults.baseURL = "http://localhost:8000/";
+        axios.defaults.headers.post['Content-Type'] = 'application/json';
+        axios.defaults.headers.post['Accept'] = 'application/json';
+
+        axios.defaults.withCredentials(true);
+
+        axios.interceptors.request.use(function (config) {
+            const token = localStorage.getItem("user_token");
+            config.headers.Authorization = token ? `Bearer ${token}` : "";
+            return config;
+        });
+
+9- while sending get and post request from the frontend we have to protect csrf token :-
+    axios.get('/sanctum/csrf-cookie').then(response => {
+            axios.post(`api/register`, registerData).then(res =>{
+              // logic code write here...
+            })
+        });
+
+10- create public and protected route for managing authenticated and unauthenticated users.
+    import React, { useEffect } from 'react'
+    import { useNavigate } from 'react-router-dom'
+
+    const ProtectedRoute = ({Component}) => {
+        const navigate = useNavigate();
+        useEffect(()=>{
+            let login = localStorage.getItem('user_token');
+            if(!login){
+                navigate('/login');
+            }
+        },[])
+    return (
+        <div>
+            <Component/>
+        </div>
+    )
+    }
+    export default ProtectedRoute
+
+
+    - Now in App.js import this route and use with <Route>
+    <Route path='/' element={<ProtectedRoute Component={ChatScreen}/>}/>
+
+
